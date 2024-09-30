@@ -1,0 +1,150 @@
+#website
+#https://www.espncricinfo.com/series/india-in-australia-2020-21-1223867/australia-vs-india-3rd-odi-1223957/ball-by-ball-commentary
+
+getwd()
+a = read.csv("1223957.csv")
+head(a,3)
+
+install.packages("sqldf")
+install.packages("gsubfn")
+install.packages("proto")
+install.packages("RSQLite")
+
+library(gsubfn)
+library(proto)
+library(RSQLite)
+library(sqldf)
+
+#number of run in each over
+sqldf("select distinct Country , ceil(Over) , sum(R+R1) 
+         from a group by ceil(Over), Country order by Country")
+
+#number of dot balls in each over
+
+sqldf("select distinct Over,P1,P2,W from a where R =4 ")
+
+
+#Adding number of ball in the data
+a$Ball=6*floor(a$Over)+10*(a$Over-floor(a$Over))
+
+#1st run of the team
+sqldf("select distinct country,Ball, Over,P1,P2,W from a where R > 0 
+group by Country having Ball=min(Ball)")
+
+#number of Extra runs
+sqldf("select distinct country,ceil(Over),sum(1) from a where R1 = 1 
+group by Country, floor(Over)")
+
+#number of dot ball by over
+sqldf("select distinct country, ceil(Over) OverNum,W Bowler,count(*) as n1 from a where R+R1 = 0 
+group by Country, floor(Over)")
+
+
+#number of Overs by bowler
+tot_over<-sqldf("select country,W Bowler,count(distinct(ceil(Over))) as NumOver from a 
+group by Country, W")
+tot_over
+
+#number of Dots by Bowler
+dot_over<-sqldf("select country,W Bowler,sum(1) as Dot
+                from a where R+R1 =0 group by Country, W 
+                order by Country")
+
+dot_over
+
+#number of extra runs by bowler
+extra_run<-sqldf("select country,W Bowler,sum(R1) as Extra
+                from a where R1 > 0 group by Country, W 
+                order by Country")
+extra_run
+
+cbind(tot_over,dot_over$Dot)
+
+#4 runs
+#first 4
+sqldf("select distinct country,Ball, Over,P1,W from a where R =4 
+group by Country having Ball=min(Ball)")
+
+#all
+sqldf("select distinct Ball, Over,P1,W as Bowler from a where R =4 ")
+#hit by Batsman
+sqldf("select distinct country, P1,count(*) four from a where R =4 
+      group by P1 order by country")
+
+#conceived by Bowler
+sqldf("select distinct country, W as Bowler,count(*) as four from a where R =4 
+      group by W order by country")
+
+#6 runs
+#first 6
+sqldf("select distinct country,Ball, Over,P1,W from a where R =6 
+group by Country having Ball=min(Ball)")
+
+#all
+sqldf("select distinct Ball, Over,P1,W as Bowler from a where R =6 ")
+#hit by Batsman
+sqldf("select distinct country, P1,count(*) six from a where R =6 
+      group by P1 order by country")
+
+#conceived by Bowler
+sqldf("select distinct country, W as Bowler,count(*) as six from a where R =6 
+      group by W order by country")
+
+
+#Single run
+#hit by Batsman
+sqldf("select distinct country, P1,count(*) single from a where R =1 
+      group by P1 order by country")
+
+#conceived by Bowler
+sqldf("select distinct country, W as Bowler,count(*) as single from a where R =1 
+      group by W order by country")
+
+#2 run
+#hit by Batsman
+sqldf("select distinct country, P1,count(*) single from a where R =2 
+      group by P1 order by country")
+
+#conceived by Bowler
+sqldf("select distinct country, W as Bowler,count(*) as single from a where R =2 
+      group by W order by country")
+
+#distribution of run on each ball
+sqldf("select distinct country, R,count(*) as single from a 
+      group by country, R order by country")
+
+#runs by each 10 overs
+
+#add variable for 10 over
+a$Over10=ceiling((a$Over)/10)
+
+sqldf("select distinct country, Over10,sum(R+R1) as run from a 
+      group by country, Over10 order by country")
+
+# dot balls
+sqldf("select distinct country, Over10,count(*) as num from a 
+where R+R1 = 0 group by country, Over10 order by country")
+
+# 4 runs
+sqldf("select distinct country, Over10,count(*) as _4 from a 
+where R = 4 group by country, Over10 order by country")
+
+#4 run by over
+sqldf("select distinct country, ceil(Over) as O,count(*) as _4 from a 
+where R = 4 group by country, ceil(Over) order by country")
+
+
+# 6 runs
+sqldf("select distinct country, Over10,count(*) as _6 from a 
+where R = 6 group by country, Over10 order by country")
+
+#6 run by over
+sqldf("select distinct country, ceil(Over) as O,count(*) as _6 from a 
+where R = 6 group by country, ceil(Over) order by country")
+
+#wickets
+sqldf("select country,over,p1,w,out,outp from a where Out >''" )
+
+#wickets by each 10 overs
+sqldf("select distinct country, Over10,count(Out) as wicket from a 
+where Out  > '' group by country, Over10 order by country")
